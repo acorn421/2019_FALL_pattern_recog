@@ -3,6 +3,10 @@ import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.mixture import GaussianMixture
+from sklearn.svm import LinearSVC, SVC
+from sklearn.datasets import make_regression
+from sklearn.linear_model import LinearRegression
 
 # K = 8
 N = 3   # number of classes
@@ -20,11 +24,20 @@ class ClassData:
         self.boundary = None
 
 cls_algorithms = ["Naive Bayes", "KNN", "EM", "Logistic Regression", "SVM"]
-cls_res = {}
 
 origin = ClassData()
 train = ClassData()
 test = ClassData()
+
+class RegData:
+    def __init__(self, x=np.empty(shape=(0, 1)), y=np.empty(shape=(0, 1)), predict=np.empty(shape=(0, 1))):
+        self.x = x
+        self.y = y
+        self.predict = predict
+
+reg_origin = RegData()
+reg_train = RegData()
+reg_test = RegData()
 
 fig = plt.figure()
 
@@ -41,72 +54,114 @@ def generate_classification_data():
     x_min, x_max = origin.data[:, 0].min() - 1, origin.data[:, 0].max() + 1
     y_min, y_max = origin.data[:, 1].min() - 1, origin.data[:, 1].max() + 1
     origin.gridx, origin.gridy = train.gridx, train.gridy = test.gridx, test.gridy =  np.meshgrid(np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.1))
-    # origin.grid = train.grid = test.grid = np.c_[xx.ravel(), yy.ravel()]
 
-# def generate_regression_data():
+def generate_regression_data():
+    global reg_origin, reg_train, reg_test
+    x, y = make_regression(n_samples=M, n_features=1, noise=40.0, shuffle=False, bias=10.0)
+    data = np.append(x, y.reshape(len(y), 1), axis=1)
+    data = data[data[:,0].argsort(axis=0)]
+    reg_origin.x, reg_origin.y = data.T
+    reg_origin.x = reg_origin.x.reshape(len(reg_origin.x), 1)
+    reg_origin.y = reg_origin.y.reshape(len(reg_origin.y), 1)
+    reg_train.x, reg_test.x = np.split(reg_origin.x, [int(M*0.7)])
+    reg_train.y, reg_test.y = np.split(reg_origin.y, [int(M*0.7)])
 
-
-def classification(algorithm):
-    global train, test
+def fit(algorithm):
+    global train
 
     if algorithm == "Naive Bayes":
         model = GaussianNB()
     elif algorithm == "KNN":
         model = KNeighborsClassifier(3)
     elif algorithm == "EM":
-        model = LogisticRegression()
+        model = GaussianMixture(3)
     elif algorithm == "Logistic Regression":
-        model = LogisticRegression()
+        model = LogisticRegression(multi_class='auto', solver='lbfgs')
     elif algorithm == "SVM":
-        model = LogisticRegression()
+        model = SVC(kernel="linear")
     else:
         raise ValueError("Wrong algorithm type")
 
+    res = ClassData(data=train.data, labels=train.labels, gridx=train.gridx, gridy=train.gridy)
+    model.fit(train.data, train.labels.ravel())
+    model.algorithm = algorithm
+    res.boundary = model.predict(np.c_[res.gridx.ravel(), res.gridy.ravel()]).reshape(res.gridx.shape)
+
+    return (res, model)
+
+def classification(model):
+    global train, test
+
     res = ClassData(data=test.data, gridx=test.gridx, gridy=test.gridy)
-    res.labels = model.fit(train.data, train.labels).predict(test.data)
+    res.labels = model.predict(test.data)
     res.boundary = model.predict(np.c_[res.gridx.ravel(), res.gridy.ravel()]).reshape(res.gridx.shape)
 
     return res
 
+def regression(model):
+    global reg_train
 
-# def plot_class()
+    res = RegData(x=reg_test.x, y=reg_test.y)
+    model.fit(reg_train.x, reg_train.y)
+    res.predict = model.predict(res.x)
 
-def plot_class(data, pos, boundary=False):
+    return (res, model)
+
+def plot_class(data, pos, title=None, model=None, boundary=False):
     global fig
 
-    color = ('ro', 'go', 'bo')  #   colors of each class
-    ax = fig.add_subplot(2, (len(cls_algorithms)+1)//2, pos)
+    color = ('ro', 'go', 'bo')  #   colors of each clpass
+    ax = fig.add_subplot(6, 3, pos)
+    ax.set_title(title)
+    ax.set_xlim(data.gridx[0][0], data.gridx[0][-1])
+    ax.set_ylim(data.gridy[0][0], data.gridy[-1][0])
     for i in range(len(data.data)):
         x, y = data.data[i].T
         ax.plot(x, y, color[int(data.labels[i])])
+    if model is not None and model.algorithm=='SVM':
+        boundary = False
+        for i in range(len(model.intercept_)):
+            ax.plot(data.gridx[0], -data.gridx[0]*(model.coef_[i][0]/model.coef_[i][1])-model.intercept_[i]/model.coef_[i][1], 'xkcd:black')
+        if len(data.data) > N*M*0.3:
+            for sv in model.support_vectors_:
+                x, y = sv
+                ax.plot(x, y, 'ko')
     if boundary:
         if data.boundary is None:
             raise ValueError("you must calculate boundary before plot")
-        ax.contourf(data.gridx, data.gridy, data.boundary, alpha=0.4)
+        ax.contourf(data.gridx, data.gridy, data.boundary, alpha=0.2)
 
-# def plot_origin():
-#     global origin, cls_algorithms
+def plot_reg(data, pos, title, model=None):
+    global reg_origin, reg_train
 
-#     color = ('ro', 'go', 'bo')  #   colors of each class
-#     fig = plt.figure()
-#     ax = fig.add_subplot(2, (len(cls_algorithms)+1)//2, 1)
-#     for i in range(N):
-#         x, y = origin.data[M*i:M*(i+1)].T
-#         ax.plot(x, y, color[i], label='class'+str(i))
-#     ax.legend(loc=2)
-        
-#     plt.show()
+    ax = fig.add_subplot(6, 3, pos)
+    ax.set_title(title)
+    if model is not None:
+        ax.scatter(reg_train.x, reg_train.y, c='g')
+        ax.scatter(data.x, data.y, c='r')
+        ax.plot(reg_origin.x, model.predict(reg_origin.x), c='k')
+    else:
+        ax.scatter(data.x, data.y, c='b')
 
 def main():
+    global cls_algorithms, fig, test, reg_train
+    
+    generate_regression_data()
+    plot_reg(reg_origin, 1, 'original regression data')
+    res, model = regression(LinearRegression())
+    plot_reg(res, 2, 'Linear regression', model=model)
+
     generate_classification_data()
-    # for algorithm in cls_algorithms:
-    #     classification(algorithm)
-    # plot_origin()
-    plot_class(origin, 1)
-    res = classification('Naive Bayes')
-    plot_class(res, 2, boundary=True)
-    res = classification('KNN')
-    plot_class(res, 3, boundary=True)
+    plot_class(origin, 3, 'original classification data')
+    for idx in range(5):
+        sv = ds = None
+        train_res, model = fit(cls_algorithms[idx])
+        test_predict = classification(model)
+        test_res = test
+        test_res.boundary = test_predict.boundary
+        plot_class(train_res, (idx+1)*3+1, cls_algorithms[idx]+' training data', model, boundary=True)
+        plot_class(test_res, (idx+1)*3+2, cls_algorithms[idx]+' test data', model, boundary=True)
+        plot_class(test_predict, (idx+1)*3+3, cls_algorithms[idx]+' prediction results', model, boundary=False)
     plt.show()
     
 
