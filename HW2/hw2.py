@@ -112,8 +112,10 @@ def plot_class(data, pos, title=None, model=None, boundary=False):
 
     color = ('ro', 'go', 'bo')  #   colors of each clpass
     ax = fig.add_subplot(6, 3, pos)
-    ax.set_title(title)
-    ax.set_xlim(data.gridx[0][0], data.gridx[0][-1])
+    # ax.set_title(title)
+    ax.text(0, 0, title, horizontalalignment='left', verticalalignment='bottom', fontsize='large', fontweight='bold', transform=ax.transAxes)
+    # ax.axis('equal')
+    ax.set_xlim(data.gridx[0][0], data.gridx[0][-1])e
     ax.set_ylim(data.gridy[0][0], data.gridy[-1][0])
     for i in range(len(data.data)):
         x, y = data.data[i].T
@@ -135,7 +137,7 @@ def plot_reg(data, pos, title, model=None):
     global reg_origin, reg_train
 
     ax = fig.add_subplot(6, 3, pos)
-    ax.set_title(title)
+    ax.text(0, 0, title, horizontalalignment='left', verticalalignment='bottom', fontsize='large', fontweight='bold', transform=ax.transAxes)
     if model is not None:
         ax.scatter(reg_train.x, reg_train.y, c='g')
         ax.scatter(data.x, data.y, c='r')
@@ -162,12 +164,9 @@ def main():
         plot_class(train_res, (idx+1)*3+1, cls_algorithms[idx]+' training data', model, boundary=True)
         plot_class(test_res, (idx+1)*3+2, cls_algorithms[idx]+' test data', model, boundary=True)
         plot_class(test_predict, (idx+1)*3+3, cls_algorithms[idx]+' prediction results', model, boundary=False)
+    plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
     plt.show()
     
 
 if __name__=='__main__':
     main()
-
-
-# import code
-# code.interact(local=globals())
