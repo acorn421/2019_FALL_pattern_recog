@@ -4,12 +4,13 @@ import argparse
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from rbfnet import RBFNet
 
-
-parser = argparse.ArgumentParser(prog='SimpleInc', description='Fuzz testing using basic increment')
+parser = argparse.ArgumentParser(prog='hw3', description='Homework3 of Pattern Recognition Spring 2019')
 parser.add_argument('algo', type=int, help="Non-linear classification algorithm{'Multi-Layerd Perceptron' : 0, 'RBF Network' : 1, 'Kernel SVM' : 2, 'Random Forest' : 3)", default=0)
-parser.add_argument('')
 parser.add_argument('-o', '--opt', type=int, help='option for classfication algorithm(RBF Network : number of clusters, Kernel SVM : type of kernel functions, Random Forest : number of decision trees')
+parser.add_argument('-n', '--no-figure', action='store_true', help='do not show figure')
+parser.add_argument('-s', '--save', action='store_true', help='save figure to png file')
 args = parser.parse_args()
 
 N = 2   # number of classes
@@ -60,8 +61,8 @@ def fit(algorithm, opt):
     if algorithm == "Multi-Layerd Perceptron":
         model = MLPClassifier(solver='lbfgs', hidden_layer_sizes=(100, ))
     elif algorithm == "RBF Network":
+        model = RBFNet(k=3)
         # model = KNeighborsClassifier(3)
-        pass
     elif algorithm == "Kernel SVM":
         model = SVC(kernel=kernels[opt])
     elif algorithm == "Random Forest":
