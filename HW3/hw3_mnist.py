@@ -7,6 +7,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import fetch_mldata
 from sklearn.model_selection import train_test_split
+from rbfnet import RBFNet
 
 
 parser = argparse.ArgumentParser(prog='hw3', description='Homework3 of Pattern Recognition Spring 2019')
@@ -16,7 +17,7 @@ args = parser.parse_args()
 
 N = 9   # number of classes
 
-default_opt = [0, 5, 0, 10]
+default_opt = [0, 15, 0, 10]
 kernels = ['rbf', 'sigmoid', 'linear', 'poly']
 
 class ClassData:
@@ -48,8 +49,7 @@ def fit(algorithm, opt):
     if algorithm == "Multi-Layerd Perceptron":
         model = MLPClassifier(solver='lbfgs', hidden_layer_sizes=(100, ))
     elif algorithm == "RBF Network":
-        # model = KNeighborsClassifier(3)
-        pass
+        model = RBFNet(k=opt, epochs=10)
     elif algorithm == "Kernel SVM":
         model = SVC(kernel=kernels[opt])
     elif algorithm == "Random Forest":

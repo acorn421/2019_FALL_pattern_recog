@@ -61,7 +61,7 @@ def fit(algorithm, opt):
     if algorithm == "Multi-Layerd Perceptron":
         model = MLPClassifier(solver='lbfgs', hidden_layer_sizes=(100, ))
     elif algorithm == "RBF Network":
-        model = RBFNet(k=3)
+        model = RBFNet(k=opt)
         # model = KNeighborsClassifier(3)
     elif algorithm == "Kernel SVM":
         model = SVC(kernel=kernels[opt])
