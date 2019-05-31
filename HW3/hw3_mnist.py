@@ -17,8 +17,8 @@ args = parser.parse_args()
 
 N = 9   # number of classes
 
-default_opt = [0, 15, 0, 10]
-kernels = ['rbf', 'sigmoid', 'linear', 'poly']
+default_opt = [0, 15, 0, 20]
+kernels = ['rbf', 'sigmoid', 'poly', 'linear']
 
 class ClassData:
     def __init__(self, data=np.empty(shape=(0, 2)), labels=np.empty(shape=(0, 1)), pair=np.empty(shape=(0, 3))):
@@ -53,11 +53,12 @@ def fit(algorithm, opt):
     elif algorithm == "Kernel SVM":
         model = SVC(kernel=kernels[opt])
     elif algorithm == "Random Forest":
-        model = RandomForestClassifier(n_estimators=opt, max_depth=2)
+        model = RandomForestClassifier(n_estimators=opt, max_depth=2, n_jobs=-1)
     else:
         raise ValueError("Wrong algorithm type")
 
     res = ClassData(data=train.data, labels=train.labels)
+    print('copy?')
     model.fit(train.data, train.labels)
     model.algorithm = algorithm
 
@@ -78,9 +79,12 @@ def main():
         args.opt = default_opt[args.algo]
     
     generate_classification_data()
+    print('generated')
 
     train_res, model = fit(cls_algorithms[args.algo], args.opt)
+    print('fitted')
     test_predict = classification(model)
+    print('classified')
 
     print("Classification report for classifier \n%s:\n%s\n"
       % (model, metrics.classification_report(test.labels, test_predict.labels)))
