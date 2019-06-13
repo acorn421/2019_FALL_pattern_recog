@@ -115,7 +115,7 @@ def plot_class(data, pos, title=None, model=None, boundary=False):
     # ax.set_title(title)
     ax.text(0, 0, title, horizontalalignment='left', verticalalignment='bottom', fontsize='large', fontweight='bold', transform=ax.transAxes)
     # ax.axis('equal')
-    ax.set_xlim(data.gridx[0][0], data.gridx[0][-1])e
+    ax.set_xlim(data.gridx[0][0], data.gridx[0][-1])
     ax.set_ylim(data.gridy[0][0], data.gridy[-1][0])
     for i in range(len(data.data)):
         x, y = data.data[i].T
