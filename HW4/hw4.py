@@ -4,12 +4,10 @@ import argparse
 from sklearn.datasets import make_classification
 from sklearn.decomposition import KernelPCA, TruncatedSVD
 from sklearn.metrics.pairwise import rbf_kernel
-from skkda.base import KernelDiscriminantAnalysis
 import scipy
 
-parser = argparse.ArgumentParser(prog='hw3', description='Homework3 of Pattern Recognition Spring 2019')
+parser = argparse.ArgumentParser(prog='hw4', description='Homework4 of Pattern Recognition Spring 2019')
 parser.add_argument('algo', type=int, help="Feature Generation algorithm{'Kernel PCA' : 0, 'SVD' : 1, 'Kernel FDA' : 2)", default=0)
-# parser.add_argument('-o', '--opt', type=int, help='option for feature generation algorithm(Kernel PCA : type of kernel functions)
 parser.add_argument('-n', '--nofigure', action='store_true', help='do not show figure')
 parser.add_argument('-s', '--save', action='store_true', help='save figure to png file')
 parser.add_argument('-l', '--load', action='store_true', help='load exist dataset')
@@ -63,19 +61,12 @@ def generate_data():
         # np.save('datasets/data_fda', origin.data)
         # np.save('datasets/labels_fda', origin.labels)
 
-def kernelPCA(data, kernel):
-    pass
-
-def SVD(data):
-    pass
-
-def kernelFDA(data, labels, n_class, gamma=10, redu_dim=10):
+def kernelFDA(data, labels, n_class, gamma=10):
     X = []
     n = []
     K = []
     M = []
     N = []
-    
 
     sq_dist = scipy.spatial.distance.pdist(data,'sqeuclidean')
     reshape = scipy.spatial.distance.squareform(sq_dist)
@@ -92,7 +83,6 @@ def kernelFDA(data, labels, n_class, gamma=10, redu_dim=10):
         T=I-O
         N.append(np.dot(K[i],np.dot(T,K[i].T)))
 
-
     nn = sum(n)
     M_star = np.sum(KK,axis=1)/float(nn)
     MM = (np.dot((M[0]-M_star),(M[0]-M_star).T)/float(n[0])) + (np.dot((M[1]-M_star),(M[1]-M_star).T)/float(n[1])) + (np.dot((M[2]-M_star),(M[2]-M_star).T)/float(n[2]))
@@ -100,32 +90,10 @@ def kernelFDA(data, labels, n_class, gamma=10, redu_dim=10):
     NNi=np.linalg.inv(NN)
     NNiMM = np.dot(NNi, MM)
     w, v = np.linalg.eig(NNiMM)
-    AA = v[:n_class-1]
-    
+    AA = v.T[:n_class-1]
+    Y = np.dot(AA, KK)
 
-    Y = []
-
-    
-    for i in range(len(data)):
-        dist = np.empty((2,))
-        for j in range(len(data)):
-            dist.append()
-
-        Ki = 
-
-    print(AA)
-    print(AA.shape)
-
-
-    
-        
-
-    
-    # kernel = rbf_kernel(X, Y, gamma=self.gamma)
-
-    
-
-
+    return Y.T.astype(np.float_)
 
 def plot_class(data, size, pos, title=None):
     global fig
@@ -163,11 +131,9 @@ def main():
     elif args.algo==2:
         plot_class(origin, [1, 2], 1, 'original')
         transform = ClassData()
-        # transform.data = KernelDiscriminantAnalysis().fit(origin.data, origin.labels).transform(origin.labels)
         transform.data = kernelFDA(origin.data, origin.labels, 3)
         transform.labels = origin.labels
-        # plot_class(transform, [1,2], 2, 'Kernel FDA')
-
+        plot_class(transform, [1,2], 2, 'Kernel FDA')
 
     if not args.nofigure:
         plt.show()
@@ -176,6 +142,5 @@ def main():
         plt.savefig('res/feature_generation_%s.png' % (feature_algorithm[args.algo]))
     
     
-
 if __name__=='__main__':
     main()
