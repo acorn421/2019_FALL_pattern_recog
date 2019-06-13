@@ -9,8 +9,9 @@ from rbfnet import RBFNet
 parser = argparse.ArgumentParser(prog='hw3', description='Homework3 of Pattern Recognition Spring 2019')
 parser.add_argument('algo', type=int, help="Non-linear classification algorithm{'Multi-Layerd Perceptron' : 0, 'RBF Network' : 1, 'Kernel SVM' : 2, 'Random Forest' : 3)", default=0)
 parser.add_argument('-o', '--opt', type=int, help='option for classfication algorithm(RBF Network : number of clusters, Kernel SVM : type of kernel functions, Random Forest : number of decision trees')
-parser.add_argument('-n', '--no-figure', action='store_true', help='do not show figure')
+parser.add_argument('-n', '--nofigure', action='store_true', help='do not show figure')
 parser.add_argument('-s', '--save', action='store_true', help='save figure to png file')
+parser.add_argument('-l', '--load', action='store_true', help='load exist dataset')
 args = parser.parse_args()
 
 N = 2   # number of classes
@@ -37,15 +38,23 @@ train = ClassData()
 test = ClassData()
 
 fig = plt.figure()
+fig.set_size_inches((25, 15), forward=False)
 
 def generate_classification_data():
     global origin, train, test
 
-    origin.data = np.append(origin.data, np.random.multivariate_normal(mean[0], cov[0], int(M/2)), axis=0)
-    origin.data = np.append(origin.data, np.random.multivariate_normal(mean[2], cov[2], int(M/2)), axis=0)
-    origin.labels = np.append(origin.labels, np.array([0] * M))
-    origin.data = np.append(origin.data, np.random.multivariate_normal(mean[1], cov[1], M), axis=0)
-    origin.labels = np.append(origin.labels, np.array([1] * M))
+    if args.load:
+        origin.data = np.load('datasets/data.npy')
+        origin.labels = np.load('datasets/labels.npy')
+    else:
+        origin.data = np.append(origin.data, np.random.multivariate_normal(mean[0], cov[0], int(M/2)), axis=0)
+        origin.data = np.append(origin.data, np.random.multivariate_normal(mean[2], cov[2], int(M/2)), axis=0)
+        origin.labels = np.append(origin.labels, np.array([0] * M))
+        origin.data = np.append(origin.data, np.random.multivariate_normal(mean[1], cov[1], M), axis=0)
+        origin.labels = np.append(origin.labels, np.array([1] * M))
+
+    # np.save('datasets/data', origin.data)
+    # np.save('datasets/labels', origin.labels)
 
     origin.pair = np.append(origin.data, origin.labels.reshape((len(origin.labels), 1)), axis = 1)
     train.pair, test.pair = np.split(np.random.permutation(origin.pair), [int(N*M*0.7)])
@@ -62,11 +71,10 @@ def fit(algorithm, opt):
         model = MLPClassifier(solver='lbfgs', hidden_layer_sizes=(100, ))
     elif algorithm == "RBF Network":
         model = RBFNet(k=opt)
-        # model = KNeighborsClassifier(3)
     elif algorithm == "Kernel SVM":
-        model = SVC(kernel=kernels[opt])
+        model = SVC(kernel=kernels[opt], cache_size=5000, max_iter=10)
     elif algorithm == "Random Forest":
-        model = RandomForestClassifier(n_estimators=opt, max_depth=2)
+        model = RandomForestClassifier(n_estimators=opt, max_depth=2, n_jobs=-1)
     else:
         raise ValueError("Wrong algorithm type")
 
@@ -127,8 +135,12 @@ def main():
     plot_class(test_res, 5, cls_algorithms[args.algo]+' test data', model, boundary=True)
     plot_class(test_predict, 6, cls_algorithms[args.algo]+' prediction results', model, boundary=True)
 
-    # plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
-    plt.show()
+    if not args.nofigure:
+        plt.show()
+
+    if args.save:
+        plt.savefig('res/non-linear_%s_opt_%s.png' % (cls_algorithms[args.algo], args.opt))
+    
     
 
 if __name__=='__main__':
